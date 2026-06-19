@@ -3,6 +3,18 @@
 {% block content %}
 <div class="card">
   <h1>Settings</h1>
-  <p style="color:#888">test</p>
+</div>
+
+<div class="card" style="border-color:#4a2020">
+  <h2 style="color:#f87171;margin-bottom:0.5rem">Danger Zone</h2>
+  <p style="color:#888;font-size:0.9rem;margin-bottom:1rem">Permanently delete your account and all your swim times. This cannot be undone.</p>
+  <button class="btn btn-danger" onclick="document.getElementById('delete-confirm').style.display='block';this.style.display='none'">Delete my account</button>
+  <div id="delete-confirm" style="display:none">
+    <p style="color:#f87171;font-size:0.9rem;margin-bottom:0.75rem">Are you sure? All your times will be deleted forever.</p>
+    <form method="post" action="/account/delete" style="display:inline">
+      <button type="submit" class="btn btn-danger">Yes, delete my account</button>
+    </form>
+    <button class="btn" style="background:#2a2a2a;border:1px solid #333;color:#ccc;margin-left:0.5rem" onclick="document.getElementById('delete-confirm').style.display='none';document.querySelector('.btn-danger').style.display='inline-block'">Cancel</button>
+  </div>
 </div>
 {% endblock %}

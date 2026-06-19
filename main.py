@@ -339,6 +339,19 @@ async def settings_page(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(request, "settings.html", {"user": user})
 
 
+@app.post("/account/delete")
+async def delete_account(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+    db.query(SwimTime).filter(SwimTime.user_id == user.id).delete()
+    db.delete(user)
+    db.commit()
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("access_token")
+    return response
+
+
 @app.get("/import", response_class=HTMLResponse)
 async def import_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
