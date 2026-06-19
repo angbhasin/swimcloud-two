@@ -5,3 +5,5 @@ python-multipart
 anthropic
 psycopg2-binary
 jinja2
+python-jose[cryptography]
+bcrypt
