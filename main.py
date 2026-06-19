@@ -79,8 +79,8 @@ async def home(request: Request, q: str = "", db: Session = Depends(get_db)):
     scy_swims = [s for s in recent_swims if s["course"] == "SCY"][:10]
     lcm_swims = [s for s in recent_swims if s["course"] == "LCM"][:10]
 
-    return templates.TemplateResponse("home.html", {
-        "request": request, "user": user, "q": q,
+    return templates.TemplateResponse(request, "home.html", {
+        "user": user, "q": q,
         "swimmers": swimmers, "recent_swims": recent_swims,
         "scy_swims": scy_swims, "lcm_swims": lcm_swims,
         "date_range": date_range,
@@ -97,14 +97,13 @@ async def swimmer_profile(swimmer_id: int, request: Request, db: Session = Depen
         raise HTTPException(status_code=404, detail="Swimmer not found")
 
     times_raw = db.query(SwimTime).filter(SwimTime.user_id == swimmer_id).all()
-    # Organize by course → event
     times_by_course: dict[str, dict[str, str]] = {c: {} for c in COURSES}
     for t in times_raw:
         times_by_course[t.course][t.event] = format_time(t.time_seconds)
 
     is_owner = user is not None and user.id == swimmer_id
-    return templates.TemplateResponse("profile.html", {
-        "request": request, "user": user, "swimmer": swimmer,
+    return templates.TemplateResponse(request, "profile.html", {
+        "user": user, "swimmer": swimmer,
         "events": EVENTS, "courses": COURSES,
         "all_events": ALL_EVENTS,
         "times_by_course": times_by_course, "is_owner": is_owner,
@@ -138,8 +137,8 @@ async def update_profile(
         times_by_course[t.course][t.event] = format_time(t.time_seconds)
 
     if error:
-        return templates.TemplateResponse("profile.html", {
-            "request": request, "user": user, "swimmer": user,
+        return templates.TemplateResponse(request, "profile.html", {
+            "user": user, "swimmer": user,
             "events": EVENTS, "courses": COURSES, "all_events": ALL_EVENTS,
             "times_by_course": times_by_course, "is_owner": True,
             "profile_success": None, "profile_error": error,
@@ -158,8 +157,8 @@ async def update_profile(
     for t in times_raw:
         times_by_course[t.course][t.event] = format_time(t.time_seconds)
 
-    return templates.TemplateResponse("profile.html", {
-        "request": request, "user": user, "swimmer": user,
+    return templates.TemplateResponse(request, "profile.html", {
+        "user": user, "swimmer": user,
         "events": EVENTS, "courses": COURSES, "all_events": ALL_EVENTS,
         "times_by_course": times_by_course, "is_owner": True,
         "profile_success": "Profile updated.", "profile_error": None,
@@ -170,7 +169,7 @@ async def update_profile(
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "register.html", {"error": None})
 
 
 @app.post("/register", response_class=HTMLResponse)
@@ -186,16 +185,16 @@ async def register(
     db: Session = Depends(get_db),
 ):
     if db.query(User).filter(User.email == email).first():
-        return templates.TemplateResponse("register.html", {
-            "request": request, "error": "Email already registered."
+        return templates.TemplateResponse(request, "register.html", {
+            "error": "Email already registered."
         })
     if len(password) < 6:
-        return templates.TemplateResponse("register.html", {
-            "request": request, "error": "Password must be at least 6 characters."
+        return templates.TemplateResponse(request, "register.html", {
+            "error": "Password must be at least 6 characters."
         })
     if gender not in ("male", "female"):
-        return templates.TemplateResponse("register.html", {
-            "request": request, "error": "Please select a gender."
+        return templates.TemplateResponse(request, "register.html", {
+            "error": "Please select a gender."
         })
     user = User(
         email=email, name=name.strip(), hashed_password=hash_password(password),
@@ -214,7 +213,7 @@ async def register(
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -226,8 +225,8 @@ async def login(
 ):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {
-            "request": request, "error": "Invalid email or password."
+        return templates.TemplateResponse(request, "login.html", {
+            "error": "Invalid email or password."
         })
     response = RedirectResponse(url=f"/swimmer/{user.id}", status_code=303)
     response.set_cookie("access_token", create_token(user.id), httponly=True, max_age=604800)
@@ -254,8 +253,8 @@ async def my_times_page(request: Request, db: Session = Depends(get_db)):
     for t in times_raw:
         times_map[t.course][t.event] = t
 
-    return templates.TemplateResponse("my_times.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "my_times.html", {
+        "user": user,
         "events": EVENTS, "courses": COURSES, "times_map": times_map,
         "relay_bases": RELAY_BASES, "relay_leg_labels": relay_leg_labels,
         "relay_event_name": relay_event_name,
@@ -290,8 +289,8 @@ async def add_time(
         times_map[t.course][t.event] = t
 
     if error:
-        return templates.TemplateResponse("my_times.html", {
-            "request": request, "user": user,
+        return templates.TemplateResponse(request, "my_times.html", {
+            "user": user,
             "events": EVENTS, "courses": COURSES, "times_map": times_map,
             "relay_bases": RELAY_BASES, "relay_leg_labels": relay_leg_labels,
             "relay_event_name": relay_event_name,
@@ -310,8 +309,8 @@ async def add_time(
     for t in times_raw:
         times_map[t.course][t.event] = t
 
-    return templates.TemplateResponse("my_times.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "my_times.html", {
+        "user": user,
         "events": EVENTS, "courses": COURSES, "times_map": times_map,
         "relay_bases": RELAY_BASES, "relay_leg_labels": relay_leg_labels,
         "relay_event_name": relay_event_name,
@@ -337,7 +336,7 @@ async def settings_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("settings.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "settings.html", {"user": user})
 
 
 @app.get("/import", response_class=HTMLResponse)
@@ -345,8 +344,8 @@ async def import_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("import.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "import.html", {
+        "user": user,
         "results": None, "errors": None, "imported": None,
     })
 
@@ -376,8 +375,8 @@ async def import_times(
     if imported:
         db.commit()
 
-    return templates.TemplateResponse("import.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "import.html", {
+        "user": user,
         "results": results, "errors": errors, "imported": imported,
         "format_time": format_time,
     })
@@ -388,8 +387,8 @@ async def photo_import_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("photo_import.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "photo_import.html", {
+        "user": user,
         "extracted": None, "errors": None, "saved": None,
     })
 
@@ -409,16 +408,16 @@ async def photo_import_upload(
 
     media_type = photo.content_type or "image/jpeg"
     if media_type not in ALLOWED_MEDIA_TYPES:
-        return templates.TemplateResponse("photo_import.html", {
-            "request": request, "user": user,
+        return templates.TemplateResponse(request, "photo_import.html", {
+            "user": user,
             "extracted": None, "errors": [f"Unsupported file type: {media_type}. Use JPEG or PNG."],
             "saved": None,
         })
 
     image_bytes = await photo.read()
     extracted, errors = extract_times_from_image(image_bytes, media_type)
-    return templates.TemplateResponse("photo_import.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "photo_import.html", {
+        "user": user,
         "extracted": extracted, "errors": errors, "saved": None,
     })
 
@@ -460,7 +459,7 @@ async def photo_import_save(request: Request, db: Session = Depends(get_db)):
     if saved:
         db.commit()
 
-    return templates.TemplateResponse("photo_import.html", {
-        "request": request, "user": user,
+    return templates.TemplateResponse(request, "photo_import.html", {
+        "user": user,
         "extracted": None, "errors": errors if errors else None, "saved": saved,
     })
