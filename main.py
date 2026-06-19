@@ -13,7 +13,7 @@ from featured_swims import FEATURED_SWIMS
 from photo_import import extract_times_from_image
 
 app = FastAPI()
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+templates = Jinja2Templates(directory="templates")
 
 
 def get_db():
